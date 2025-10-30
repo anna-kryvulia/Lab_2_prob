@@ -277,6 +277,25 @@ K <- 1e3
 
 #### Next, calculate the parameters of the standard normal approximation
 
+For independent and identically distributed Poisson random variables\
+$$
+X_1, X_2, \dots, X_n \sim \text{Poisson}(\mu),
+$$ we have\
+$$
+E[X_i] = \mu, \quad \text{and} \quad \mathrm{Var}(X_i) = \mu.
+$$ The sample mean is\
+$$
+\overline{X} = \frac{1}{n}\sum_{i=1}^{n} X_i.
+$$ Then its expected value and variance are\
+$$
+E[\overline{X}] = \mu, \quad \mathrm{Var}(\overline{X}) = \frac{\mu}{n}.
+$$ By the **Central Limit Theorem (CLT)**, for large $n$, $$
+\frac{\overline{X} - \mu}{\sqrt{\mu / n}} \sim \mathcal{N}(0,1),
+$$ so the standard deviation (sigma) of the sample mean is\
+$$
+\sigma = \sqrt{\frac{\mu}{n}}.
+$$
+
 ```{r}
 mu <- N * lambda
 sigma <- sqrt(mu/n)
@@ -331,57 +350,75 @@ mu <- N * lambda
 
 a <- 8e8
 p <- 0.95
+```
 
-# We derive formula for P(S_n <= 8*10^8) >= 0.95 by finding
-# P(S_n > 8*10^8) <= 0.05
-# using Markov's inequality which states that
-# P(S_n > 8*10^8) <= E(S_n) / 8*10^8
-# the following inequality for n:
-# n * mu / 8*10^8 <= 0.05
+We derive formula for the probability condition $$
+P(S_n \le 8 \times 10^8) \ge 0.95
+$$ by finding $$
+P(S_n > 8 \times 10^8) \le 0.05
+$$ using Markov's inequality, which states that $$
+P(S_n > 8 \times 10^8) \le \frac{E(S_n)}{8 \times 10^8}
+$$ the following inequality for $n$: $$
+\frac{n \cdot \mu}{8 \times 10^8} \le 0.05
+$$
 
+```{r}
 n_markov <- floor((1-p) * a / mu)
 cat("n_markov =", n_markov, "\n")
+```
 
+We need $$
+P(S_n \le a) \ge 0.95
+$$ Similarly, we transform it to $$
+P(S_n > a) \le 0.05
+$$ Let's use **Chernoff inequality**: $$
+P(S_n > a) \le e^{-s \cdot a} \cdot M(s)
+$$ For Poisson distributed random variable $$
+M(s) = e^{n \mu (e^{s} - 1)}
+$$ So we have such inequality: $$
+P(S_n \ge a) \le e^{-s \cdot a + n \mu (e^{s} - 1)}
+$$ To find maximum $n$ we need to solve $$
+e^{-s \cdot a + n \mu (e^{s} - 1)} = 0.05
+$$ which gives $$
+-s \cdot a + n \mu (e^{s} - 1) = \ln(0.05)
+$$ whence $$
+e^{s} = \frac{\ln(0.05)}{\mu n} + \frac{a s}{\mu n} + 1
+$$ We can neglect the very small value of $\frac{\ln(0.05)}{\mu n}$ because of $\mu$ in the denominator—it is very close to zero. Now let's estimate $$
+e^{s} = \frac{a s}{\mu n} + 1
+$$ Since according to Chernoff inequality $s > 0$ and we want to find maximum of $e^{s}$,\
+we use a tangent line of $e^{s}$ at point $s = 0$: $$
+f(s) = s - 1
+$$ Looking at the coefficient near $s$, we want it to be greater than 1 so we can get a positive root of the equation to satisfy the condition.\
+Thus our coefficient $$
+\frac{a}{\mu n} > 1
+$$ from where $$
+n < \frac{a}{\mu}
+$$ Clearly, $$
+n_{\text{max}} = \left\lfloor \frac{a}{\mu} \right\rfloor
+$$
 
-# We need P(S_n <= a) >= 0.95
-# Similarly we transformate it to
-# P(S_n > a) <= 0.05
-# Let's use Chernoff inequality:
-# P(S_n > a) <= exp{-s * a} * M(s)
-# For Poisson distributed r.v. M(s) = exp{n*mu*(exp(s) -1)}
-# So we have such inequality:
-# P(S_n >= a) <= exp{-s * a + n*mu*(exp(s) -1)}
-# So to find maximum n we need to find:
-# exp{-s * a + n*mu*(exp(s) -1)} = 0.05
-# -s * a + n*mu*(exp(s) -1) = ln(0.05)
-# whence exp{s} = ln(0.05)/(mu * n) + a * s / (mu * n) + 1
-# we can not take to account very small value of ln(0.05)/(mu * n) because of mu in
-# denominator it is very close to zero
-# Now  let's estiemate exp{s} = a*s / mu * n + 1
-# Since according to Chernoff inequality (1)s > 0 and we want to find maximum of exp{s}
-# We use a tangent line of exp{s} at point s = 0 f(s) = s -1. Looking at coefficient
-# near s we want it to be greater than 1 so we can get positive root of equation to
-# satisfy (1)
-# so our coefficient a / (mu * n ) > 1 from where n < a / mu
-# clearly n_max equals to integer value of a /mu
-
+```{r}
 n_chernoff <- floor(a / mu)
 cat("n_chernoff =", n_chernoff, "\n")
- 
+```
 
+We need $$
+P(S_n \le a) \ge 0.95
+$$ By **Central Limit Theorem (CLT)** we can approximate $$
+\frac{S_n - n \mu}{\sqrt{n \mu}} \sim N(0, 1)
+$$ So we can use the quantile for 0.95: $$
+qnorm(0.95) = 1.644854
+$$ which gives $$
+\frac{a - n \mu}{\sqrt{n \mu}} = 1.644854
+$$ Now we just solve this for $n$.
 
-# We need P(S_n <= a) >= 0.95.
-# By CLT we can approximate (S_n - n*mu) / sqrt(n*mu) ~ N(0,1).
-# So we can use quantile for 0.95:
-# qnorm(0.95) = 1.644854
-# which gives (a - n*mu) / sqrt(n*mu) = 1.644854
-# Now we just solve this for n
-
+```{r}
 sigma = sqrt(mu)
 n_clt <- floor(((-qnorm(0.95) * sigma + sqrt((qnorm(0.95) * sigma)^2 + 4 * mu * a)) / (2 * mu))^2)
 cat("n_clt =", n_clt, "\n")
+```
 
-
+```{r}
 simulate_prob <- function(n, mu, K, a) {
   sims <- replicate(K, sum(rpois(n, mu)))
   mean(sims <= a)
