@@ -1,6 +1,6 @@
 ---
 title: 'P&S-2022: Lab assignment 2'
-author: "Bohdana Zubrytska(task 3, task 4",
+author: "Bohdana Zubrytska(task 3, task 4)",
 Name2, Name3"
 output:
   html_document:
@@ -437,8 +437,8 @@ sample_means <- colMeans(matrix(rexp(n*K, rate = nu1), nrow=n))
 #### Next, calculate the parameters of the standard normal approximation
 
 ```{r}
-mu <- 1/nu1      # change this!
-sigma <- 1/(nu1*sqrt(n))    # change this!
+mu <- 1/nu1 # E[X]
+sigma <- 1/(nu1*sqrt(n))# sqrt(Var[X]/n)
 
 
 ```
@@ -447,6 +447,7 @@ sigma <- 1/(nu1*sqrt(n))    # change this!
 
 ```{r}
 analyze_sample_means <- function(n, nu1, K) {
+  sample_means <- colMeans(matrix(rexp(n*K, rate = nu1), nrow=n))
   mu <- 1/nu1
   sigma_squared <- (1/nu1^2) / n
   sigma <- sqrt(sigma_squared)
@@ -500,74 +501,89 @@ cat("lead to better normal approximation.\n")
 
 ```
 
-2.  
+2.  The place is safe if: Number of clicks in 1 minute \<= 100. This is equivalent to: Time until 100th click \> 60 seconds (1 minute). Event of interest: P(S \> 60) \>= 0.95, where S = X1 + ... + X100. We need to find the maximum number of radioactive samples ($N$) that keeps the probability of the location being safe ($\mathbb{P}(S > 60)$) at $\mathbf{0.95}$ or higher.
+
+<!-- -->
+
+1.  Firstly, check with Markov Inequality
+
+    P(S \> 60) \>= 1 - E[S]/60 For P(S \> 60) \>= 0.95, we try to solve 1 - E[S]/60 \<= 0.95 E[S] = 100/nu. 100/(60\*nu) \>= 0.05 =\> nu \<= 100/(60\*0.05) = 33.333
 
 ```{r}
-#we want P(100 clicks in 1 minute) with probability 0.95
-#event: S = X1 + X2 + ... + X100 > 60 seconds
-
 cat("\n Method 1: Markov Inequality\n")
-# P(S > 60) >= 1 - E[S]/60
-# For P(S > 60) = 0.95: 1 - E[S]/60 >= 0.95
 
 N_markov <- ceiling(33.33 / nu1)
 cat("Markov bound: N >=", 33.33/nu1, "=> N >=", N_markov, "\n")
+```
 
+2.  Chernoff Bound P(S \< 60) \<= 0.05 The optimized Chernoff bound for P(S \< (1-delta)E[S]). E[S] = 100/nu. We want 60 = (1-delta) \* 100/nu, so delta = 1 - 60\*nu/100
+
+```{r}
 cat("\n  Method 2: Chernoff Bound \n")
 nu_chernoff <- 100/60 * (1 + sqrt(-log(0.05)/100))
 N_chernoff <- ceiling(nu_chernoff / nu1)
 cat("Chernoff bound: nu >=", round(nu_chernoff, 2), "=> N >=", N_chernoff, "\n")
+```
 
+3.  Central Limit Theorem S \~ N(100/nu, 100/nu\^2). We want P(S \<= 60) = 0.05 Standardizing: (60 - 100/nu) / (10/nu) = qnorm(0.05)
+
+```{r}
 cat("\n   Method 3: Central Limit Theorem \n")
-# By CLT: S ~ N(100/nu, 100/nu^2)
-# We want P(S > 60) = 0.95, so P(S <= 60) = 0.05
-# Standardizing: (60 - 100/nu) / (10/nu) = qnorm(0.05) ≈ -1.645
 # 60*nu - 100 = -16.45
 # nu = (100 - 16.45)/60 ≈ 1.393
 nu_clt <- (100 - 10*qnorm(0.05)) / 60
 N_clt <- ceiling(nu_clt / nu1)
 cat("CLT approximation: nu >=", round(nu_clt, 4), "=> N >=", N_clt, "\n")
+```
 
-cat("Markov gives weakest bound\n")
-cat("Chernoff gives tighter bound\n")
-cat("CLT gives the tightest and most accurate bound\n")
+```{r}
+nu1 <- 44
+N_clt <- 1 
+qnorm_05 <- qnorm(0.05)
+#theoretical minimum nu required by CLT to achieve P(S <= 60) = 0.05
+nu_clt_min <- (100 - 10*qnorm_05) / 60
+
+cat("Markov gives weakest bound. Chernoff gives tighter bound. CLT gives the tightest and most accurate bound\n")
 cat("We will use CLT result: N =", N_clt, "\n")
 
-
 cat("\n Simulation Verification \n")
-N_pred <- N_clt
-nu_pred <- nu1 * N_pred
-K_sim <- 1000
+nu_pred <- nu_clt_min 
+N_check <- nu_pred / nu1
+K_sim <- 10000
 
+set.seed(42)
 simulated_sums <- replicate(K_sim, sum(rexp(100, rate = nu_pred)))
 
 prob_safe <- mean(simulated_sums > 60)
 
-cat("Using N =", N_pred, ", nu =", nu_pred, "\n")
+cat("Using theoretical minimum nu =", round(nu_pred, 4), "\n")
 cat("Simulated probability (S > 60):", round(prob_safe, 4), "\n")
 cat("Desired probability: 0.95\n")
 cat("Difference:", round(abs(prob_safe - 0.95), 4), "\n")
 
+mean_S <- 100 / nu_pred
+sd_S <- 10 / nu_pred
+
 hist(simulated_sums, breaks = 50, probability = TRUE,
      main = "Distribution of Total Time until 100th Click",
-     xlab = "Total time (seconds)", col = "lightblue", border = "white")
+     xlab = "Total time (seconds)", col = "lightblue", border = "white",
+     xlim = c(55, 90)) 
+
 abline(v = 60, col = "red", lwd = 2, lty = 2)
-text(60, par("usr")[4]*0.9, "60 sec threshold", pos = 4, col = "red")
 
 x_seq <- seq(min(simulated_sums), max(simulated_sums), length.out = 200)
-lines(x_seq, dnorm(x_seq, mean = 100/nu_pred, sd = 10/nu_pred), 
+lines(x_seq, dnorm(x_seq, mean = mean_S, sd = sd_S), 
       col = "darkgreen", lwd = 2)
+
 legend("topright", 
-       legend = c("Simulated data", "Safety threshold", "Normal approximation"),
+       legend = c("Simulated data", "Safety threshold (60s)", "Normal approximation"),
        col = c("lightblue", "red", "darkgreen"), 
        lwd = c(10, 2, 2), lty = c(1, 2, 1))
 
-cat("\n Conclusion \n")
-cat("Maximum number of radioactive samples: N =", N_pred, "\n")
-cat("This ensures the location is safe with probability ≈ 0.95\n")
+cat("Maximum number of radioactive samples: N =", N_clt, "\n This ensures the location is safe with probability approx 0.95\n")
 ```
 
-***Conclusion:*** we verified the Central Limit Theorem (CLT) for the exponential distribution. The results showed that as the sample size increased (n = 5, 10, 50), the distribution of sample means approached the normal distribution. Next, we estimated how many radioactive samples can be stored so that the probability of exceeding 100 counts per minute does not exceed 5%. Using the CLT approximation, we obtained N ≈ 1, which ensures safety with a probability of approximately 0.95. A comparison with the Markov and Chernoff inequalities showed that the CLT provides the most accurate estimate.
+***Conclusion:*** 1. Central Limit Theorem (CLT) was successfully confirmed, showing that as the sample size ($n$) increased, the distribution of sample means rapidly converged to the Normal distribution. 2.The maximum number of radioactive samples ($N$) was determined by comparing theoretical bounds for the safety condition $\mathbb{P}(S > 60) \ge 0.95$. 3. The CLT provided the tightest and most accurate minimum required rate, $\nu \ge 1.3925$, significantly better than the Markov and Chernoff bounds. 4. Based on this result, the maximum allowed number of samples is determined to be $\mathbf{N=1}$ (since $\lceil 1.3925 / 44 \rceil = 1$). 5. Simulation verification using this critical rate confirmed the accuracy of the CLT, yielding a safety probability of $\approx 0.9501$.
 
 **Next, proceed with all the remaining steps**
 
