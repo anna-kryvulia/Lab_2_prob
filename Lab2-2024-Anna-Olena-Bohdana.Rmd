@@ -1,7 +1,6 @@
 ---
 title: 'P&S-2022: Lab assignment 2'
-author: "Bohdana Zubrytska(task 3, task 4)",
-Name2, Name3"
+author: "Yakovenko Olena Anna Kryvulia Bohdana Zubrytska"
 output:
   html_document:
     df_print: paged
@@ -10,18 +9,30 @@ output:
 ## General comments and instructions
 
 -   Complete solution will give you **4 points** (working code with explanations + oral defense). Submission deadline **November 1, 2023, 22:00**\
+
 -   The report must be prepared as an *R notebook*; you must submit to **cms** both the source *R notebook* **and** the generated html file\
+
 -   At the beginning of the notebook, provide a work-breakdown structure estimating efforts of each team member\
+
 -   For each task, include
+
     -   problem formulation and discussion (what is a reasonable answer to discuss);\
     -   the corresponding $\mathbf{R}$ code with comments (usually it is just a couple of lines long);\
     -   the statistics obtained (like sample mean or anything else you use to complete the task) as well as histograms etc to illustrate your findings;\
     -   justification of your solution (e.g. refer to the corresponding theorems from probability theory);\
     -   conclusions (e.g. how reliable your answer is, does it agree with common sense expectations etc)\
+
 -   The **team id number** referred to in tasks is the **two-digit** ordinal number of your team on the list. Include the line **set.seed(team id number)** at the beginning of your code to make your calculations reproducible. Also observe that the answers **do** depend on this number!\
+
 -   Take into account that not complying with these instructions may result in point deduction regardless of whether or not your implementation is correct.
 
-------------------------------------------------------------------------
+### Work-breakdown
+
+Yakovenko Olena - Task 1
+
+Anna Kryvulia - Task 2
+
+Bohdana Zubrytska - Task 3, Task 4
 
 ### Task 1
 
@@ -298,6 +309,7 @@ $$
 
 ```{r}
 mu <- N * lambda
+n <- 5
 sigma <- sqrt(mu/n)
 ```
 
@@ -420,24 +432,24 @@ cat("n_clt =", n_clt, "\n")
 
 ```{r}
 simulate_prob <- function(n, mu, K, a) {
-  sims <- replicate(K, sum(rpois(n, mu)))
-  mean(sims <= a)
+  samples <- colSums(matrix(rpois(n * K, lambda = mu), nrow = n))
+  count <- sum(samples < a)
+  return(count / K)
 }
 
 p_markov  <- simulate_prob(n_markov, mu, K, a)
 p_chernoff <- simulate_prob(n_chernoff, mu, K, a)
 p_clt     <- simulate_prob(n_clt, mu, K, a)
 
+
 cat("\nEmpirical probabilities P(S_n ≤ 8×10^8):\n")
-cat(" Markov bound   (n =", n_markov,  "):", round(p_markov, 4), "\n")
+cat(" Markov bound   (n =", n_markov,  "):", p_markov, "\n")
 cat(" Chernoff bound (n =", n_chernoff, "):", round(p_chernoff, 4), "\n")
 cat(" CLT bound      (n =", n_clt,      "):", round(p_clt, 4), "\n")
 
 ```
 
-All three theoretical approaches (Markov, Chernoff, and CLT) give extremely small upper bounds for n. The Markov inequality even results in n = 0, which is very uninformative. For n = 7 (Chernoff and CLT), the empirical probability P(S_n \< 8 \* 10\^8) = 1, which far exceeds the target level of 0.95.
-
-This happens because the Poisson parameter is very large, mu -\> 1.09 \* 10\^8; even a single sample already yields an expected number of decays over the critical threshold 8 \* 10\^8. As a result, the theoretical bounds become overly conservative: they satisfy the probability condition but at unrealistically small n.
+All three theoretical approaches (Markov, Chernoff, and CLT) give extremely small upper bounds for n. The Markov inequality even results in n = 0, which is very uninformative. For n = 7 (Chernoff and CLT), the empirical probability P(S_n \< 8 \* 10\^8) = 1, which satisfies p \>= 0.95.
 
 **Do not forget to include several sentences summarizing your work and the conclusions you have made!**
 
@@ -476,7 +488,6 @@ sample_means <- colMeans(matrix(rexp(n*K, rate = nu1), nrow=n))
 ```{r}
 mu <- 1/nu1 # E[X]
 sigma <- 1/(nu1*sqrt(n))# sqrt(Var[X]/n)
-
 
 ```
 
@@ -532,11 +543,9 @@ cat("As n increases, the maximum difference decreases:\n")
 cat("n=5:  max_diff =", round(results_n5$max_diff, 4), "\n")
 cat("n=10: max_diff =", round(results_n10$max_diff, 4), "\n")
 cat("n=50: max_diff =", round(results_n50$max_diff, 4), "\n")
-cat("This confirms the Central Limit Theorem: larger sample sizes\n")
-cat("lead to better normal approximation.\n")
-
-
 ```
+
+This confirms the Central Limit Theorem: larger sample sizes lead to better normal approximation.
 
 2.  The place is safe if: Number of clicks in 1 minute \<= 100. This is equivalent to: Time until 100th click \> 60 seconds (1 minute). Event of interest: P(S \> 60) \>= 0.95, where S = X1 + ... + X100. We need to find the maximum number of radioactive samples ($N$) that keeps the probability of the location being safe ($\mathbb{P}(S > 60)$) at $\mathbf{0.95}$ or higher.
 
@@ -547,8 +556,6 @@ cat("lead to better normal approximation.\n")
     P(S \> 60) \>= 1 - E[S]/60 For P(S \> 60) \>= 0.95, we try to solve 1 - E[S]/60 \<= 0.95 E[S] = 100/nu. 100/(60\*nu) \>= 0.05 =\> nu \<= 100/(60\*0.05) = 33.333
 
 ```{r}
-cat("\n Method 1: Markov Inequality\n")
-
 N_markov <- ceiling(33.33 / nu1)
 cat("Markov bound: N >=", 33.33/nu1, "=> N >=", N_markov, "\n")
 ```
@@ -556,7 +563,6 @@ cat("Markov bound: N >=", 33.33/nu1, "=> N >=", N_markov, "\n")
 2.  Chernoff Bound P(S \< 60) \<= 0.05 The optimized Chernoff bound for P(S \< (1-delta)E[S]). E[S] = 100/nu. We want 60 = (1-delta) \* 100/nu, so delta = 1 - 60\*nu/100
 
 ```{r}
-cat("\n  Method 2: Chernoff Bound \n")
 nu_chernoff <- 100/60 * (1 + sqrt(-log(0.05)/100))
 N_chernoff <- ceiling(nu_chernoff / nu1)
 cat("Chernoff bound: nu >=", round(nu_chernoff, 2), "=> N >=", N_chernoff, "\n")
@@ -565,27 +571,17 @@ cat("Chernoff bound: nu >=", round(nu_chernoff, 2), "=> N >=", N_chernoff, "\n")
 3.  Central Limit Theorem S \~ N(100/nu, 100/nu\^2). We want P(S \<= 60) = 0.05 Standardizing: (60 - 100/nu) / (10/nu) = qnorm(0.05)
 
 ```{r}
-cat("\n   Method 3: Central Limit Theorem \n")
-# 60*nu - 100 = -16.45
-# nu = (100 - 16.45)/60 ≈ 1.393
 nu_clt <- (100 - 10*qnorm(0.05)) / 60
 N_clt <- ceiling(nu_clt / nu1)
 cat("CLT approximation: nu >=", round(nu_clt, 4), "=> N >=", N_clt, "\n")
 ```
 
+Markov gives weakest bound. Chernoff gives tighter bound. CLT gives the tightest and most accurate bound. We will use CLT result
+
 ```{r}
 nu1 <- 44
-N_clt <- 1 
-qnorm_05 <- qnorm(0.05)
-#theoretical minimum nu required by CLT to achieve P(S <= 60) = 0.05
-nu_clt_min <- (100 - 10*qnorm_05) / 60
-
-cat("Markov gives weakest bound. Chernoff gives tighter bound. CLT gives the tightest and most accurate bound\n")
-cat("We will use CLT result: N =", N_clt, "\n")
-
-cat("\n Simulation Verification \n")
-nu_pred <- nu_clt_min 
-N_check <- nu_pred / nu1
+N_clt <- 1 #N determined by CLT
+nu_pred <- nu1 * N_clt
 K_sim <- 10000
 
 set.seed(42)
@@ -593,18 +589,19 @@ simulated_sums <- replicate(K_sim, sum(rexp(100, rate = nu_pred)))
 
 prob_safe <- mean(simulated_sums > 60)
 
-cat("Using theoretical minimum nu =", round(nu_pred, 4), "\n")
+cat("Using condition rate nu =", nu_pred, "\n")
 cat("Simulated probability (S > 60):", round(prob_safe, 4), "\n")
 cat("Desired probability: 0.95\n")
 cat("Difference:", round(abs(prob_safe - 0.95), 4), "\n")
 
+#mean is 100/44 ~ 2.27s
 mean_S <- 100 / nu_pred
 sd_S <- 10 / nu_pred
 
 hist(simulated_sums, breaks = 50, probability = TRUE,
      main = "Distribution of Total Time until 100th Click",
      xlab = "Total time (seconds)", col = "lightblue", border = "white",
-     xlim = c(55, 90)) 
+     xlim = c(mean_S - 4*sd_S, mean_S + 4*sd_S)) 
 
 abline(v = 60, col = "red", lwd = 2, lty = 2)
 
@@ -617,10 +614,12 @@ legend("topright",
        col = c("lightblue", "red", "darkgreen"), 
        lwd = c(10, 2, 2), lty = c(1, 2, 1))
 
-cat("Maximum number of radioactive samples: N =", N_clt, "\n This ensures the location is safe with probability approx 0.95\n")
+cat("Maximum number of radioactive samples: N =", N_clt, "\n")
 ```
 
-***Conclusion:*** 1. Central Limit Theorem (CLT) was successfully confirmed, showing that as the sample size ($n$) increased, the distribution of sample means rapidly converged to the Normal distribution. 2.The maximum number of radioactive samples ($N$) was determined by comparing theoretical bounds for the safety condition $\mathbb{P}(S > 60) \ge 0.95$. 3. The CLT provided the tightest and most accurate minimum required rate, $\nu \ge 1.3925$, significantly better than the Markov and Chernoff bounds. 4. Based on this result, the maximum allowed number of samples is determined to be $\mathbf{N=1}$ (since $\lceil 1.3925 / 44 \rceil = 1$). 5. Simulation verification using this critical rate confirmed the accuracy of the CLT, yielding a safety probability of $\approx 0.9501$.
+The simulation run with $\mathbf{\nu = 44}$ demonstrates that the location is extremely safe, but this contradicts the desired theoretical probability.Extremely Safe: The average time for 100 clicks ($\mathbb{E}[S]$) with $\nu=44$ is only $\mathbf{2.27 \text{ seconds}}$. The probability that this time $\mathbf{S}$ exceeds the $\mathbf{60 \text{-second}}$ safety threshold is virtually zero ($\mathbb{P}(S > 60) \approx 0$).Incorrect Conclusion: The final statement, "This ensures the location is safe with probability approx 0.95," is false for $\nu=44$. The graph visually confirms that the entire distribution is far below 60 seconds.The Solution: To satisfy the $\mathbf{0.95}$ requirement, a much lower rate must be used. As corrected in the final code version, the CLT says that it about \~ 1,3925. Visualizing the results for $\nu=44$ was difficult because the mean ($\approx 2.27 \text{ seconds}$) was extremely far from the threshold ($\mathbf{60 \text{ seconds}}$).
+
+***Conclusion:*** 1. Central Limit Theorem (CLT) was successfully confirmed, showing that as the sample size ($n$) increased, the distribution of sample means rapidly converged to the Normal distribution. 2.The maximum number of radioactive samples ($N$) was determined by comparing theoretical bounds for the safety condition $\mathbb{P}(S > 60) \ge 0.95$. 3. The CLT provided the tightest and most accurate minimum required rate, $\nu \ge 1.3925$, significantly better than the Markov and Chernoff bounds. 4. Based on this result, the maximum allowed number of samples is determined to be $\mathbf{N=1}$ (since $\lceil 1.3925 / 44 \rceil = 1$)
 
 **Next, proceed with all the remaining steps**
 
@@ -636,107 +635,94 @@ cat("Maximum number of radioactive samples: N =", N_clt, "\n This ensures the lo
 
     1.  Suppose we have a random variable $X$. Explain why $\mathbb{E}(\frac{1}{X}) \neq \frac{1}{\mathbb{E(X)}}$;
 
-    ```{r}
-    cat("Question 1.1: Why E(1/X) is not equal to 1/E(X)?\n\n")
+Expectation is a linear operator, but 1/X is a nonlinear function. Because of Jensen's inequality, for convex functions: E(f(X)) is greater or equal to f(E(X)) Example: X takes values 1 and 3 with equal probability. E(X) = (1+3)/2 = 2, so 1/E(X) = 1/2 = 0.5 E(1/X) = (1/1 + 1/3)/2 = 0.667 So 0.667 is not equal to 0.5
 
+````         
+2.  Let $X \sim \mathscr{N}(\mu,\sigma^2)$ with $\mu = teamidnumber$ and $\sigma^{2} = 2\times teamidnumber+7$. Simulate realizations $x_1,x_2,\dots,x_{100}$ of $X$ and $y_1,y_2,\dots,y_{100}$ of $Y := \frac{1}{X}$ to calculate the values of $\frac{1}{\overline{\textbf{X}}}$ and $\overline{\textbf{Y}}$. Comment on the received results;
 
-    cat("Expectation is a linear operator, but 1/X is a nonlinear function.\n")
-    cat("Because of Jensen's inequality, for convex functions:\n")
-    cat("E(f(X)) is greater or equal to f(E(X))\n\n")
+```{r}
+cat(" 1.2: Simulation with Normal Distribution\n\n")
 
-    cat("Example: X takes values 1 and 3 with equal probability\n")
-    cat("E(X) = (1+3)/2 = 2, so 1/E(X) = 1/2 = 0.5\n")
-    cat("E(1/X) = (1/1 + 1/3)/2 = 0.667\n")
-    cat("So 0.667 is not equal to 0.5\n\n")
-    ```
+team_id <- 34
+mu <- team_id
+sigma_squared <- 2 * team_id + 7
+sigma <- sqrt(sigma_squared)
 
-    2.  Let $X \sim \mathscr{N}(\mu,\sigma^2)$ with $\mu = teamidnumber$ and $\sigma^{2} = 2\times teamidnumber+7$. Simulate realizations $x_1,x_2,\dots,x_{100}$ of $X$ and $y_1,y_2,\dots,y_{100}$ of $Y := \frac{1}{X}$ to calculate the values of $\frac{1}{\overline{\textbf{X}}}$ and $\overline{\textbf{Y}}$. Comment on the received results;
+cat("Parameters: mu =", mu, ", sigma squared =", sigma_squared, "\n\n")
 
-    ```{r}
-    cat("Question 1.2: Simulation with Normal Distribution\n\n")
+set.seed(123)
+n <- 100
+X <- rnorm(n, mean = mu, sd = sigma)
+Y <- 1 / X
 
-    team_id <- 34
-    mu <- team_id
-    sigma_squared <- 2 * team_id + 7
-    sigma <- sqrt(sigma_squared)
+mean_X <- mean(X)
+mean_Y <- mean(Y)
+one_over_mean_X <- 1 / mean_X
 
-    cat("Parameters: mu =", mu, ", sigma squared =", sigma_squared, "\n\n")
+cat("Sample mean of X:", round(mean_X, 4), "\n")
+cat("1 divided by mean of X:", round(one_over_mean_X, 4), "\n")
+cat("Sample mean of 1/X:", round(mean_Y, 4), "\n")
+cat("Difference:", round(mean_Y - one_over_mean_X, 4), "\n\n")
+```
+````
 
-    set.seed(123)
-    n <- 100
-    X <- rnorm(n, mean = mu, sd = sigma)
-    Y <- 1 / X
+As expected, E(1/X) is not equal to 1/E(X). E(1/X) is larger because 1/x is a convex function.
 
-    mean_X <- mean(X)
-    mean_Y <- mean(Y)
-    one_over_mean_X <- 1 / mean_X
+````         
+3.  Let $X$ and $Y$ be exponentially distributed r.v.'s with parameter $\lambda = 2$. Set $Z := \log{X} + 5$. Plot the Quantile-Quantile plot and scatterplot of $X$ and $Y$. Plot the Quantile-Quantile plot and scatterplot of $X$ and $Z$. Explain the results. Comment on the difference of relations between the pairs of random variables. Which pair of r.v.'s is dependent and which one is similar?
 
-    cat("Sample mean of X:", round(mean_X, 4), "\n")
-    cat("1 divided by mean of X:", round(one_over_mean_X, 4), "\n")
-    cat("Sample mean of 1/X:", round(mean_Y, 4), "\n")
-    cat("Difference:", round(mean_Y - one_over_mean_X, 4), "\n\n")
+```{r}
+cat("1.3: QQ-plots and Scatterplots\n\n")
 
-    cat("As expected, E(1/X) is not equal to 1/E(X).\n")
-    cat("E(1/X) is larger because 1/x is a convex function.\n\n")
-    ```
+set.seed(456)
+n <- 500
+lambda <- 2
 
-    3.  Let $X$ and $Y$ be exponentially distributed r.v.'s with parameter $\lambda = 2$. Set $Z := \log{X} + 5$. Plot the Quantile-Quantile plot and scatterplot of $X$ and $Y$. Plot the Quantile-Quantile plot and scatterplot of $X$ and $Z$. Explain the results. Comment on the difference of relations between the pairs of random variables. Which pair of r.v.'s is dependent and which one is similar?
+X_exp <- rexp(n, rate = lambda)
+Y_exp <- rexp(n, rate = lambda)
+Z_exp <- log(X_exp) + 5
 
-    ```{r}
-    cat("Question 1.3: QQ-plots and Scatterplots\n\n")
+par(mfrow = c(2, 2))
 
-    set.seed(456)
-    n <- 500
-    lambda <- 2
+#1: scatterplot of X and Y (independent)
+plot(X_exp, Y_exp, pch = 16, col = rgb(0, 0, 1, 0.5),
+ main = "Scatterplot: X vs Y (independent)",
+ xlab = "X", ylab = "Y")
+grid()
 
-    X_exp <- rexp(n, rate = lambda)
-    Y_exp <- rexp(n, rate = lambda)
-    Z_exp <- log(X_exp) + 5
+#2: QQ-plot of X and Y
+qqplot(X_exp, Y_exp, pch = 16, col = rgb(0, 0, 1, 0.5),
+   main = "QQ-plot: X vs Y",
+   xlab = "X quantiles", ylab = "Y quantiles")
+abline(0, 1, col = "red", lwd = 2)
+grid()
 
-    par(mfrow = c(2, 2))
+#3: scatterplot of X and Z (dependent)
+plot(X_exp, Z_exp, pch = 16, col = rgb(1, 0, 0, 0.5),
+ main = "Scatterplot: X vs Z (dependent)",
+ xlab = "X", ylab = "Z = log(X) + 5")
+grid()
 
-    #1: scatterplot of X and Y (independent)
-    plot(X_exp, Y_exp, pch = 16, col = rgb(0, 0, 1, 0.5),
-     main = "Scatterplot: X vs Y (independent)",
-     xlab = "X", ylab = "Y")
-    grid()
+# 4: QQ-plot of X and Z
+qqplot(X_exp, Z_exp, pch = 16, col = rgb(1, 0, 0, 0.5),
+   main = "QQ-plot: X vs Z",
+   xlab = "X quantiles", ylab = "Z quantiles")
+grid()
 
-    #2: QQ-plot of X and Y
-    qqplot(X_exp, Y_exp, pch = 16, col = rgb(0, 0, 1, 0.5),
-       main = "QQ-plot: X vs Y",
-       xlab = "X quantiles", ylab = "Y quantiles")
-    abline(0, 1, col = "red", lwd = 2)
-    grid()
+par(mfrow = c(1, 1))
 
-    #3: scatterplot of X and Z (dependent)
-    plot(X_exp, Z_exp, pch = 16, col = rgb(1, 0, 0, 0.5),
-     main = "Scatterplot: X vs Z (dependent)",
-     xlab = "X", ylab = "Z = log(X) + 5")
-    grid()
+```
+````
 
-    # 4: QQ-plot of X and Z
-    qqplot(X_exp, Z_exp, pch = 16, col = rgb(1, 0, 0, 0.5),
-       main = "QQ-plot: X vs Z",
-       xlab = "X quantiles", ylab = "Z quantiles")
-    grid()
+For X and Y (both exponential with lambda = 2): scatterplot shows random cloud with no pattern, so they are independent QQ-plot shows points following diagonal line, so distributions are similar
 
-    par(mfrow = c(1, 1))
+For X and Z (where Z = log(X) + 5): scatterplot shows clear curved pattern, so they are dependent QQ-plot shows curved pattern, so distributions are different
 
-    cat("For X and Y (both exponential with lambda = 2):\n")
-    cat("Scatterplot shows random cloud with no pattern, so they are independent\n")
-    cat("QQ-plot shows points following diagonal line, so distributions are similar\n\n")
+X and Y are independent and have similar distributions X and Z are dependent and have different distributions
 
-    cat("For X and Z (where Z = log(X) + 5):\n")
-    cat("Scatterplot shows clear curved pattern, so they are dependent\n")
-    cat("QQ-plot shows curved pattern, so distributions are different\n\n")
-
-    cat("Summary:\n")
-    cat("X and Y are independent and have similar distributions\n")
-    cat("X and Z are dependent and have different distributions\n\n")
-
-    ```
-
-    ------------------------------------------------------------------------
+```         
+------------------------------------------------------------------------
+```
 
 2.  You toss a fair coin three times and a random variable $X$ records how many times the coin shows Heads. You convince your friend that they should play a game with the following payoff: every round (equivalent to three coin tosses) will cost £$1$. They will receive £$0.5$ for every coin showing Heads. What is the expected value and the variance of the random variable $Y := 0.5X-1$?
 
@@ -752,109 +738,94 @@ cat("Maximum number of radioactive samples: N =", N_clt, "\n This ensures the lo
 
         -   Uniformly distributed
 
-    ```{r}
-      # 2.1
-      cat("Question 2.1: Type of Random Variable X\n\n")
+X = number of Heads in 3 coin tosses, X is binomially distributed
 
-      cat("X = number of Heads in 3 coin tosses\n\n")
-      cat("X is binomially distributed\n\n")
+We have n = 3 independent trials. Each trial has two outcomes: Heads or Tails. Probability of Heads is p = 0.5. X counts the number of Heads. So X follows Binomial distribution with n=3 and p=0.5
 
-      cat("We have n = 3 independent trials \n")
-      cat("Each trial has two outcomes: Heads or Tails\n")
-      cat("Probability of Heads is p = 0.5 \n")
-      cat("X counts the number of Heads\n")
-      cat("So X follows Binomial distribution with n=3 and p=0.5\n\n")
-    ```
+````         
+2.  What are the expected value and variance of X? Simulate realizations $x_1,x_2,\dots,x_{100}$ of $X$ to calculate the values of sample mean $\overline{\mathbf{X}}$ and sample variance $s^2 = \frac{\sum_{i=1}^{n}{(x_i - \overline{x})^{2}}}{n-1}$. Comment on the results;
 
-    2.  What are the expected value and variance of X? Simulate realizations $x_1,x_2,\dots,x_{100}$ of $X$ to calculate the values of sample mean $\overline{\mathbf{X}}$ and sample variance $s^2 = \frac{\sum_{i=1}^{n}{(x_i - \overline{x})^{2}}}{n-1}$. Comment on the results;
+```{r}
+# 2.2
+cat("2.2: Expected Value and Variance of X\n\n")
+n_trials <- 3
+p_heads <- 0.5
 
-    ```{r}
-    # 2.2
-    cat("Question 2.2: Expected Value and Variance of X\n\n")
-    n_trials <- 3
-    p_heads <- 0.5
+#theoretical values
+E_X <- n_trials * p_heads
+Var_X <- n_trials * p_heads * (1 - p_heads)
 
-    #theoretical values
-    E_X <- n_trials * p_heads
-    Var_X <- n_trials * p_heads * (1 - p_heads)
+cat("Theoretical values:\n")
+cat("For X ~ Binomial(n=3, p=0.5):\n")
+cat("E(X) = n times p = 3 times 0.5 =", E_X, "\n")
+cat("Var(X) = n times p times (1-p) = 3 times 0.5 times 0.5 =", Var_X, "\n\n")
 
-    cat("Theoretical values:\n")
-    cat("For X ~ Binomial(n=3, p=0.5):\n")
-    cat("E(X) = n times p = 3 times 0.5 =", E_X, "\n")
-    cat("Var(X) = n times p times (1-p) = 3 times 0.5 times 0.5 =", Var_X, "\n\n")
+set.seed(789)
+n_sim <- 100
+X_sim <- rbinom(n_sim, size = n_trials, prob = p_heads)
 
-    set.seed(789)
-    n_sim <- 100
-    X_sim <- rbinom(n_sim, size = n_trials, prob = p_heads)
+sample_mean_X <- mean(X_sim)
+sample_var_X <- var(X_sim)
 
-    sample_mean_X <- mean(X_sim)
-    sample_var_X <- var(X_sim)
+cat("Simulated values (100 realizations):\n")
+cat("Sample mean:", round(sample_mean_X, 4), "\n")
+cat("Sample variance:", round(sample_var_X, 4), "\n\n")
 
-    cat("Simulated values (100 realizations):\n")
-    cat("Sample mean:", round(sample_mean_X, 4), "\n")
-    cat("Sample variance:", round(sample_var_X, 4), "\n\n")
+barplot(table(X_sim) / n_sim, 
+    main = "Distribution of X (Number of Heads in 3 tosses)",
+    xlab = "Number of Heads", ylab = "Relative Frequency",
+    col = "lightblue", ylim = c(0, 0.5))
 
-    cat("Simulated values are close to theoretical values.\n")
-    cat("Small differences are due to random sampling.\n")
-    cat("With more simulations, results would be even closer.\n\n")
+x_vals <- 0:3
+theo_probs <- dbinom(x_vals, size = n_trials, prob = p_heads)
+points(1:4 - 0.5, theo_probs, col = "red", pch = 19, cex = 1.5)
+legend("topright", legend = c("Simulated", "Theoretical"), 
+   fill = c("lightblue", NA), pch = c(NA, 19), col = c(NA, "red"))
+```
+````
 
-    barplot(table(X_sim) / n_sim, 
-        main = "Distribution of X (Number of Heads in 3 tosses)",
-        xlab = "Number of Heads", ylab = "Relative Frequency",
-        col = "lightblue", ylim = c(0, 0.5))
+Simulated values are close to theoretical values. Small differences are due to random sampling. With more simulations, results would be even closer.
 
-    x_vals <- 0:3
-    theo_probs <- dbinom(x_vals, size = n_trials, prob = p_heads)
-    points(1:4 - 0.5, theo_probs, col = "red", pch = 19, cex = 1.5)
-    legend("topright", legend = c("Simulated", "Theoretical"), 
-       fill = c("lightblue", NA), pch = c(NA, 19), col = c(NA, "red"))
-    ```
+````         
+3.  What are the expected value and variance of Y? Simulate realizations $y_1,y_2,\dots,y_{100}$ of $Y$ to calculate the values of sample mean $\overline{\mathbf{Y}}$ and sample variance $s^2 = \frac{\sum_{i=1}^{n}{(y_i - \overline{y})^{2}}}{n-1}$. Comment on the results;
 
-    3.  What are the expected value and variance of Y? Simulate realizations $y_1,y_2,\dots,y_{100}$ of $Y$ to calculate the values of sample mean $\overline{\mathbf{Y}}$ and sample variance $s^2 = \frac{\sum_{i=1}^{n}{(y_i - \overline{y})^{2}}}{n-1}$. Comment on the results;
+```{r}
+   # 2.3
+cat(" 2.3: Expected Value and Variance of Y\n\n")
 
-    ```{r}
-       # 2.3
-    cat("\nQuestion 2.3: Expected Value and Variance of Y\n\n")
+cat("Y = 0.5 times X minus 1 \n\n")
 
-    cat("Y = 0.5 times X minus 1 \n\n")
+#theoretical values
+E_Y <- 0.5 * E_X - 1
+Var_Y <- (0.5^2) * Var_X
 
-    #theoretical values
-    E_Y <- 0.5 * E_X - 1
-    Var_Y <- (0.5^2) * Var_X
+cat("Theoretical values:\n")
+cat("E(Y) = 0.5 times E(X) minus 1 = 0.5 times 1.5 minus 1 =", E_Y, "\n")
+cat("Var(Y) = 0.5 squared times Var(X) = 0.25 times", Var_X, "=", Var_Y, "\n\n")
 
-    cat("Theoretical values:\n")
-    cat("Using properties of expectation and variance:\n")
-    cat("E(Y) = 0.5 times E(X) minus 1 = 0.5 times 1.5 minus 1 =", E_Y, "\n")
-    cat("Var(Y) = 0.5 squared times Var(X) = 0.25 times", Var_X, "=", Var_Y, "\n\n")
+Y_sim <- 0.5 * X_sim - 1
 
-    Y_sim <- 0.5 * X_sim - 1
+sample_mean_Y <- mean(Y_sim)
+sample_var_Y <- var(Y_sim)
 
-    sample_mean_Y <- mean(Y_sim)
-    sample_var_Y <- var(Y_sim)
+cat("Simulated values (100 realizations):\n")
+cat("Sample mean:", round(sample_mean_Y, 4), "\n")
+cat("Sample variance:", round(sample_var_Y, 4), "\n\n")
 
-    cat("Simulated values (100 realizations):\n")
-    cat("Sample mean:", round(sample_mean_Y, 4), "\n")
-    cat("Sample variance:", round(sample_var_Y, 4), "\n\n")
+hist(Y_sim, breaks = seq(-1.5, 0.5, by = 0.5), probability = TRUE,
+ main = "Distribution of Y (Payoff from Game)",
+ xlab = "Payoff (pounds)", ylab = "Relative Frequency",
+ col = "lightcoral", border = "white")
+abline(v = E_Y, col = "blue", lwd = 3, lty = 2)
+text(E_Y, par("usr")[4]*0.9, paste("E(Y) =", E_Y), pos = 4, col = "blue")
+```
+````
 
-    cat("Simulated values match theoretical values well.\n")
-    cat("The expected payoff E(Y) = -0.25 means the player loses on average.\n")
-    cat("This is not a fair game!\n\n")
+Simulated values match theoretical values well. The expected payoff E(Y) = -0.25 means the player loses on average. This is not a fair game. Each round costs 1 pound. Expected number of Heads: 1.5 Expected payout: 0.5 times 1.5 = 0.75 pounds Net expected gain: 0.75 minus 1 = -0.25 pounds So friend is being tricked
 
-    cat("Each round costs 1 pound\n")
-    cat("Expected number of Heads: 1.5\n")
-    cat("Expected payout: 0.5 times 1.5 = 0.75 pounds\n")
-    cat("Net expected gain: 0.75 minus 1 = -0.25 pounds (a loss!)\n")
-    cat("Your friend is being tricked!\n\n")
-
-    hist(Y_sim, breaks = seq(-1.5, 0.5, by = 0.5), probability = TRUE,
-     main = "Distribution of Y (Payoff from Game)",
-     xlab = "Payoff (pounds)", ylab = "Relative Frequency",
-     col = "lightcoral", border = "white")
-    abline(v = E_Y, col = "blue", lwd = 3, lty = 2)
-    text(E_Y, par("usr")[4]*0.9, paste("E(Y) =", E_Y), pos = 4, col = "blue")
-    ```
-
-    ##Concluion for 4
+```         
+##Concluion for 4
+```
 
 We explained theoretically and showed with an example why E(1/X) ≠ 1/E(X) — due to nonlinearity and Jensen’s inequality.
 
@@ -870,4 +841,8 @@ The binomial example (3 coin tosses) showed that X \~ Bin(3, 0.5) with E(X) = 1.
 
 ### General summary and conclusions
 
-Summarize here what you've done, whether you solved the tasks, what difficulties you had etc.
+We validated the reliability of the Hamming(7,4) code by simulating the full encode–transmit–decode pipeline. The empirical success rate $\hat p$ closely matched the theoretical $p^*$ (the decoder corrects any single-bit error), with small deviations explained by rare multi-error cases that may still decode correctly. Using the sample standard error and the CLT, we built a 95% confidence interval for $\hat p$ and used it to choose $N$ so that the target half-width satisfies $\varepsilon \le 0.03$. Finally, the histogram of errors in the four information bits aligned with a $\mathrm{Binomial}(4,p)$ pattern, confirming the independent bit-flip channel model. Overall, simulations agreed with theory and provide clear guidance on how large $N$ should be to reach the desired precision.
+
+In part 2 the results confirm that as the sample size increases, the distribution of the sample means gets very close to a normal. It is clearly visible while plotting c.d.f. and e.s.d.f and max difference between them also reduces. The theoretical bound obtained using Markov's inequality is extremely conservative — they produce unrealistically small n values. The theoretical bounds obtained by Chernoff and CLT satisfy desired probability. This shows that Markov's inequality gives the most rough estimate.
+
+In part 3 we verified the Central Limit Theorem, showing that the averages of exponentially distributed numbers approach a normal distribution. We compared empirical and theoretical distribution functions, calculated the safety probability for a place with radioactive samples, and confirmed the accuracy of the CLT. We studied the properties of expected value and showed that (E(1/X) \neq 1/E(X)). We compared independent and dependent random variables using graphs. We solved a binomial problem and found that the game is disadvantageous. The main difficulties were make simulation with our parameter 44, which is larger than theoretical mean(\~1,3). Because of it is hard to explain the plot.
