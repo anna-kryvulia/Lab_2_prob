@@ -26,14 +26,6 @@ output:
 
 -   Take into account that not complying with these instructions may result in point deduction regardless of whether or not your implementation is correct.
 
-### Work-breakdown
-
-Yakovenko Olena - Task 1
-
-Anna Kryvulia - Task 2
-
-Bohdana Zubrytska - Task 3, Task 4
-
 ### Task 1
 
 #### In this task, we discuss the $[7,4]$ Hamming code and investigate its reliability. That coding system can correct single errors in the transmission of $4$-bit messages and proceeds as follows:
@@ -173,7 +165,7 @@ p_theory <- (1-p)^7 + 7*p*(1-p)^6 # p_star
 p_theory
 ```
 
-1.  $\hat p$ expected to be close to $p^*$ when N is large because each trial’s success indicator is i.i.d. Bernoulli($p^∗$), so the sample mean $\hat p$ converges to its expectation $p^*$ by the Law of Large Numbers.
+1.  $\hat p$ expected to be close to $p^*$ when N is large because each trial’s success indicator is i.i.d. Bernoulli($p^∗$), so the sample mean $\hat p$ converges to its expectation $p^*$ by the Law of Large Numbers. The algorithm is guaranteed to return a correct message if there were no errors in its encryption, or if there was only one. It can return a correct message if there was more than one error, but this is a rare occurrence. Therefore, the $\hat p$ value may be slightly larger than the theoretical one.
 
 2.  By estimating the standard deviation of the corresponding indicator of success by the standard error of your sample and using the CLT, predict the \emph{confidence} interval $(p^*-\varepsilon, p^* + \varepsilon)$, in which the estimate $\hat p$ falls with probability at least $0.95$.\
     $$
@@ -200,7 +192,7 @@ e
 ```
 
 3.  What choice of $N$ guarantees that $\varepsilon \le 0.03$?\
-    Using the 95% (≈ two-sigma) rule $$
+    Since the target half-width is smaller than the one obtained at N=100, we need to increase N, because ${\varepsilon}$ decreases as $\sqrt{\frac{1}{N}}$. Using the 95% (≈ two-sigma) rule $$
     \varepsilon = 2\sigma
     $$ $$
     \hat{\varepsilon} = 2\sqrt{\frac{\hat p\!\left(1-\hat p\right)}{N}} \le 0.03
@@ -248,6 +240,8 @@ legend("topright",
 ```
 
 How we can see empirical histogram closely matches the theoretical Binomial(4, p=0.34) curve.
+
+The empirical histogram of errors in a 4-bit message closely matches the theoretical Binomial(4, p) curve because we are counting channel errors on the four information bits before decoding. Each of the 4 bits passes through a binary symmetric channel with independent flips of probability p; the error indicators are i.i.d. Bernoulli(p), so their sum k is Binomial(4,p). The decoder doesn’t affect this distribution since we’re comparing received bits to the transmitted ones pre-decoding. For context, if we count errors across all 7 code bits, then K∼Binomial(7,p). As N grows, the empirical frequencies converge to these binomial probabilities by the Law of Large Numbers/CLT.
 
 ### Task 2.
 
@@ -637,7 +631,6 @@ The simulation run with $\mathbf{\nu = 44}$ demonstrates that the location is ex
 
 Expectation is a linear operator, but 1/X is a nonlinear function. Because of Jensen's inequality, for convex functions: E(f(X)) is greater or equal to f(E(X)) Example: X takes values 1 and 3 with equal probability. E(X) = (1+3)/2 = 2, so 1/E(X) = 1/2 = 0.5 E(1/X) = (1/1 + 1/3)/2 = 0.667 So 0.667 is not equal to 0.5
 
-````         
 2.  Let $X \sim \mathscr{N}(\mu,\sigma^2)$ with $\mu = teamidnumber$ and $\sigma^{2} = 2\times teamidnumber+7$. Simulate realizations $x_1,x_2,\dots,x_{100}$ of $X$ and $y_1,y_2,\dots,y_{100}$ of $Y := \frac{1}{X}$ to calculate the values of $\frac{1}{\overline{\textbf{X}}}$ and $\overline{\textbf{Y}}$. Comment on the received results;
 
 ```{r}
@@ -664,11 +657,9 @@ cat("1 divided by mean of X:", round(one_over_mean_X, 4), "\n")
 cat("Sample mean of 1/X:", round(mean_Y, 4), "\n")
 cat("Difference:", round(mean_Y - one_over_mean_X, 4), "\n\n")
 ```
-````
 
 As expected, E(1/X) is not equal to 1/E(X). E(1/X) is larger because 1/x is a convex function.
 
-````         
 3.  Let $X$ and $Y$ be exponentially distributed r.v.'s with parameter $\lambda = 2$. Set $Z := \log{X} + 5$. Plot the Quantile-Quantile plot and scatterplot of $X$ and $Y$. Plot the Quantile-Quantile plot and scatterplot of $X$ and $Z$. Explain the results. Comment on the difference of relations between the pairs of random variables. Which pair of r.v.'s is dependent and which one is similar?
 
 ```{r}
@@ -712,7 +703,6 @@ grid()
 par(mfrow = c(1, 1))
 
 ```
-````
 
 For X and Y (both exponential with lambda = 2): scatterplot shows random cloud with no pattern, so they are independent QQ-plot shows points following diagonal line, so distributions are similar
 
@@ -742,7 +732,6 @@ X = number of Heads in 3 coin tosses, X is binomially distributed
 
 We have n = 3 independent trials. Each trial has two outcomes: Heads or Tails. Probability of Heads is p = 0.5. X counts the number of Heads. So X follows Binomial distribution with n=3 and p=0.5
 
-````         
 2.  What are the expected value and variance of X? Simulate realizations $x_1,x_2,\dots,x_{100}$ of $X$ to calculate the values of sample mean $\overline{\mathbf{X}}$ and sample variance $s^2 = \frac{\sum_{i=1}^{n}{(x_i - \overline{x})^{2}}}{n-1}$. Comment on the results;
 
 ```{r}
@@ -782,11 +771,9 @@ points(1:4 - 0.5, theo_probs, col = "red", pch = 19, cex = 1.5)
 legend("topright", legend = c("Simulated", "Theoretical"), 
    fill = c("lightblue", NA), pch = c(NA, 19), col = c(NA, "red"))
 ```
-````
 
 Simulated values are close to theoretical values. Small differences are due to random sampling. With more simulations, results would be even closer.
 
-````         
 3.  What are the expected value and variance of Y? Simulate realizations $y_1,y_2,\dots,y_{100}$ of $Y$ to calculate the values of sample mean $\overline{\mathbf{Y}}$ and sample variance $s^2 = \frac{\sum_{i=1}^{n}{(y_i - \overline{y})^{2}}}{n-1}$. Comment on the results;
 
 ```{r}
@@ -819,7 +806,6 @@ hist(Y_sim, breaks = seq(-1.5, 0.5, by = 0.5), probability = TRUE,
 abline(v = E_Y, col = "blue", lwd = 3, lty = 2)
 text(E_Y, par("usr")[4]*0.9, paste("E(Y) =", E_Y), pos = 4, col = "blue")
 ```
-````
 
 Simulated values match theoretical values well. The expected payoff E(Y) = -0.25 means the player loses on average. This is not a fair game. Each round costs 1 pound. Expected number of Heads: 1.5 Expected payout: 0.5 times 1.5 = 0.75 pounds Net expected gain: 0.75 minus 1 = -0.25 pounds So friend is being tricked
 
